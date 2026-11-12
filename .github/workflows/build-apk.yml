@@ -23,6 +23,12 @@ jobs:
 
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: false
+          packages: ''
+
+      - name: Accept Android licenses
+        run: yes | sdkmanager --licenses
 
       - name: Install Android components
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
@@ -36,6 +42,7 @@ jobs:
         run: |
           mkdir -p app/src/main/assets
           unzip -o modern_annihilation_pwa_corrigee.zip -d app/src/main/assets
+          test -f app/src/main/assets/index.html
 
       - name: Create Android project
         run: |
@@ -94,12 +101,10 @@ jobs:
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <application
                   android:label="Modern Annihilation"
-                  android:theme="@android:style/Theme.Material.Light.NoActionBar"
-                  android:usesCleartextTraffic="true">
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar">
                   <activity
                       android:name=".MainActivity"
-                      android:exported="true"
-                      android:configChanges="orientation|screenSize|keyboardHidden">
+                      android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
                           <category android:name="android.intent.category.LAUNCHER"/>
@@ -120,45 +125,21 @@ jobs:
           import android.webkit.WebSettings;
 
           public class MainActivity extends Activity {
-              private WebView webView;
-
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
 
-                  webView = new WebView(this);
+                  WebView webView = new WebView(this);
                   setContentView(webView);
 
                   WebSettings settings = webView.getSettings();
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
-                  settings.setDatabaseEnabled(true);
                   settings.setAllowFileAccess(true);
-                  settings.setAllowContentAccess(true);
 
                   webView.setWebViewClient(new WebViewClient());
                   webView.setWebChromeClient(new WebChromeClient());
-
-                  if (savedInstanceState != null) {
-                      webView.restoreState(savedInstanceState);
-                  } else {
-                      webView.loadUrl("file:///android_asset/index.html");
-                  }
-              }
-
-              @Override
-              public void onSaveInstanceState(Bundle outState) {
-                  webView.saveState(outState);
-                  super.onSaveInstanceState(outState);
-              }
-
-              @Override
-              public void onBackPressed() {
-                  if (webView.canGoBack()) {
-                      webView.goBack();
-                  } else {
-                      super.onBackPressed();
-                  }
+                  webView.loadUrl("file:///android_asset/index.html");
               }
           }
           EOF
